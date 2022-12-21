@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>VP_Button.qml</file>
+        <file>VP_TextEdit.qml</file>
+    </qresource>
+</RCC>
