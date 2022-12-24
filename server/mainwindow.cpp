@@ -9,7 +9,9 @@
 
 #include "networkserv.h"
 #include "mainwindow.h"
+#include "./executors/state/state.h"
 #include "executorInterface.h"
+#include "common_parts.h"
 #include "./ui_mainwindow.h"
 
 //----------------------------------------------------------------------------------
@@ -25,13 +27,17 @@ MainWindow::MainWindow(quint16 portN, QWidget * parent)
     QLabel * lbl_Port = new QLabel();
     lbl_Port->setText(QString("Port: %1  ").arg(portN));
     ui->statusbar->addPermanentWidget(lbl_Port);
+    //TODO QMainWindow::setWindowIcon(...)
+
+    qRegisterMetaType <CmdParts> ("CmdParts");
+    qRegisterMetaType <QVector<CmdParts>> ("QVector<CmdParts>");
+
 }
 
 //----------------------------------------------------------------------------------
 //
 MainWindow::~MainWindow()
 {
-  //  finishThread();
     delete ui;
 }
 
@@ -93,39 +99,55 @@ void MainWindow::fixState(const QString & msg)
 void MainWindow::parseNewCommands(QTcpSocket * sock, const QStringList & cmnds)
 {
     QVector<CmdParts> badCommands;
+    QVector<CmdParts> commandsToDo;
     for (const auto & cmd : cmnds)
     {
         CmdParts cmdPart(sock);
-        if (cmdPart.parse(cmd) &&
-            executors.contains(cmdPart.name) &&
-            checkEquipmentState(cmdPart)    )
-            commandsToDo.append(cmdPart);
-        else
+        if (!cmdPart.parse(cmd) ||
+            !checkEquipmentState(cmdPart))
         {
-            if (!executors.contains(cmdPart.name))
-                cmdPart.rezult += " no executor";
             badCommands.append(cmdPart);
-
+            continue;
         }
+        if(!executors.contains(cmdPart.name))
+        {
+            cmdPart.rezult += " No executor for command "+ cmdPart.name;
+            badCommands.append(cmdPart);
+            continue;
+        }
+        commandsToDo.append(cmdPart);
     }
+    for(auto & cmdPart: commandsToDo)
+        if(execCommand(cmdPart))
+                emit answerCommands({cmdPart});
+        else badCommands << cmdPart;
+
+
     if (!badCommands.isEmpty())
         emit answerCommands(badCommands);
-
 }
+
 
  //----------------------------------------------------------------------------------
  //
- bool MainWindow::checkEquipmentState(CmdParts & cmdPart)
+ bool MainWindow::checkEquipmentState(CmdParts & /*cmdPart*/)
  {
-     if (TestIV_ExecutorInterface::getEquipState())
+     return true;   // state is always On!
+
+     //if (State::getEquipmentState())
+ /*    qDebug() << State::equipmentState << & State::equipmentState;
+        if ( State::equipmentState )
          return true;   // state is On
 
-     if (TestIV_ExecutorInterface::ifTurnOnCmd(cmdPart))
-         return true;  // trying to set state into On
+     //if (TestIV_ExecutorInterface::ifTurnOnCmd(cmdPart))   // trying to set state = On
+     if("state" == cmdPart.name)
+         return true;
 
-     cmdPart.rezult = T_FAILID + "equipment is switched off";
+     cmdPart.rezult = T_FAILID + "equipment is switched off" ;
      return false;
+     */
  }
+
 
 //----------------------------------------------------------------------------------
 //
@@ -141,7 +163,7 @@ bool MainWindow::initAll()
 
     // main -> network  thread signals
     connect(this, &MainWindow::answerCommands, servPtr, &networkServ::onAnswerCommands);
-    //    connect(this, &MainWindow::, servPtr,  &networkServ::);
+    //connect(this, &MainWindow::sendCommand, servPtr,  &networkServ::onSendCommand);
 
     if (!initExecutors())
         return false;
@@ -199,17 +221,43 @@ bool MainWindow::initExecutors()
         {
             loader.setFileName(fullName);
             if (!loader.load())
-                qWarning() << "unloaded plugin " << fullName << loader.errorString();
+                qWarning() << "unloaded plugin "<< fullName << loader.errorString();
             else
             {
                 TestIV_ExecutorInterface * interf = qobject_cast<TestIV_ExecutorInterface *>(loader.instance());
                 if (nullptr == interf)
                     qDebug () << "not app plugin" << fullName;
                 else
+                {
+                    interf->setWidget(ui->lcdNumber);
+                    interf->init();
                     executors[subdir] = interf;
+                }
             }
         }
     }
     qDebug() << "loaded executors" << executors.keys();
+    return true;
+}
+//----------------------------------------------------------------------------------
+//
+bool MainWindow::execCommand(CmdParts &cmdPart)
+{
+    TestIV_ExecutorInterface * interf = nullptr;
+    if(executors.contains(cmdPart.name))   // must be already done in checkers
+        interf = executors[cmdPart.name];
+    if(nullptr == interf)
+    {
+        cmdPart.rezult = T_FAILID + "No executer for command " + cmdPart.name;
+        return false;
+    }
+    if(!interf->checkCommandArgs(cmdPart))
+        return false;
+
+    if(cmdPart.isSetter)
+         interf->doSetter(cmdPart);
+    else interf->doGetter(cmdPart);
+
+    cmdPart.rezult = T_OK + cmdPart.arg.toString();
     return true;
 }

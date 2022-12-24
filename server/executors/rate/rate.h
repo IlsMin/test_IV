@@ -24,7 +24,7 @@ class RATE_EXPORT rate:  public TestIV_ExecutorInterface
          rate();
          ~rate() { timer.stop(); }
     protected:
-        bool checkCommandArgs(const CmdParts & cmnd) override;
+        bool checkCommandArgs(CmdParts &cmnd) override;
         void doSetter(const CmdParts & cmnd)  override;
         void doGetter(CmdParts & cmnd)  override;
         void init() override;

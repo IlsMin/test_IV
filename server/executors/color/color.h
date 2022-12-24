@@ -17,9 +17,11 @@ class COLOR_EXPORT Color:  public TestIV_ExecutorInterface
     protected:
         // QWidget * pluginWidget  = nullptr;
 
-        bool checkCommandArgs(const CmdParts & cmnd) override;
+        bool checkCommandArgs(CmdParts &cmnd) override;
         void doSetter(const CmdParts & cmnd)  override;
         void doGetter(CmdParts & cmnd)  override;
+    public:
+        void init() override {}
 
 };
 

@@ -2,27 +2,39 @@
 #include "state.h"
 #include "common_parts.h"
 
-
-bool State::checkCommandArgs(const CmdParts &cmnd)
+//bool State::equipmentState ( false);
+bool State::checkCommandArgs(CmdParts &cmnd)
 {
     bool rez = TestIV_ExecutorInterface::checkCommandArgs(cmnd);
     if (rez)
-        rez = LED_STATES.contains(cmnd.arg.toString(), Qt::CaseInsensitive);
+    {
+            rez = LED_STATES.contains(cmnd.arg.toString(), Qt::CaseInsensitive);
+        if(!rez)
+            cmnd.rezult = T_FAILID + "wrong state";
+    }
     return rez;
 }
 
 void State::doSetter(const CmdParts &cmnd)
 {
-    state = cmnd.arg.toBool();
+    equipmentState = isStateOn(cmnd);   // on : off
+    qDebug() <<"state" << cmnd.arg << equipmentState <<&equipmentState;
     QLCDNumber * numb = qobject_cast<QLCDNumber *>(pluginWidget);
     if(numb != nullptr)
-       numb->setSegmentStyle( state ? QLCDNumber::Filled : QLCDNumber::Outline);
+       numb->setSegmentStyle( equipmentState ? QLCDNumber::Filled : QLCDNumber::Outline);
     else
-     //   if( pluginWidget != nullptr)
-            pluginWidget->setVisible(state);
+        if( pluginWidget != nullptr)
+            pluginWidget->setVisible(equipmentState);
 }
 
 void State::doGetter(CmdParts &cmnd)
 {
-    cmnd.rezult = state;
+    cmnd.rezult = equipmentState;
+}
+
+bool State::getEquipmentState()
+{
+    qDebug() << "get_equipmentState"<< &State::equipmentState ;
+     return  State::equipmentState;
+
 }

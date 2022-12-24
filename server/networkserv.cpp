@@ -84,7 +84,7 @@ void networkServ::onSocketReadyRead()
 {
 
     QTcpSocket * sock = qobject_cast<QTcpSocket *>(sender());
-    if (nullptr == sock)
+  if (nullptr == sock)
     {
         emit stateMessage("Unknown object sent signal about socket data");
         return;
@@ -96,19 +96,34 @@ void networkServ::onSocketReadyRead()
         char buf[1024];   // max packet length?
         int len = sock->readLine(buf, sizeof(buf));
         if (len > 0)
+        {
             data.append( QString::fromUtf8(buf, len));
-        //else break;
+            data.replace("\r\n", "\n");     // Telnet
+        }
+            //else break;
     }
+    bool isFullCmd = data.endsWith(END_COMMAND);
     QStringList commands = data.split(END_COMMAND, Qt::SkipEmptyParts);
+    if(commands.isEmpty())
+    {
+        emit stateMessage("bad data in socket (can't parse command)");
+        //TODO ? say about
+        return;
+    }
     const auto lastCmd = commands.last();
-    if (lastCmd.endsWith(END_COMMAND)) // full command
+    if (isFullCmd) // full command
         socketData[sock] = QString();
     else
     {
         socketData[sock] = lastCmd;
         commands.removeLast();     // not full command string
     }
-    emit newCommandsArived(sock, commands);
+    if(!commands.isEmpty())
+    {
+        emit newCommandsArived(sock, commands);
+
+      //echo  sock->write(lastCmd.toLocal8Bit()+"\n");
+    }
 }
 //----------------------------------------------------------------------------------
 //
@@ -137,6 +152,7 @@ void networkServ::onSocketConnectionClosed()
     //TODO or not TODO - some emergency operations with server?
 }
 
+
 //----------------------------------------------------------------------------------
 //
 void networkServ::onAnswerCommands(const QVector<CmdParts> & responses)
@@ -144,8 +160,10 @@ void networkServ::onAnswerCommands(const QVector<CmdParts> & responses)
     for (CmdParts const & answer : responses)
     {
         QTcpSocket * sock = answer.sock;
-        sock->write(answer.rezult.toLocal8Bit());
-        //TODO: send responces to set_/OK commands to ALL connected clients
+        //socketData.at(0).
+        qDebug() << "write back:" << answer.rezult;
+        sock->write(answer.rezult.toLocal8Bit()+"\n");
+        //TODO: send responces to set_/OK commands to ALL connected clients ?
         // (all clients need to know current/changed state)
     }
 }

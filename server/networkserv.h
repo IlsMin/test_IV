@@ -25,17 +25,20 @@ class networkServ : public QObject
         QSharedPointer <QTcpServer> tcpServer;
         QMap <QTcpSocket *, QString> socketData;
 
-    private slots:
+
+private slots:
         void onNewConnection();
         void onSocketReadyRead();
         void onSocketError();
         void onSocketConnectionClosed();
+        //void executeCommand(const QVector<CmdParts> &cmnds);
     public slots:
         void onAnswerCommands(const QVector<CmdParts> & responses);
 
     signals:
         void stateMessage(const QString & msg);
         void newCommandsArived(QTcpSocket * sender, const QStringList & cmds);
+
 
 };
 

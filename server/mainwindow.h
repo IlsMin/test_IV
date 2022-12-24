@@ -29,7 +29,6 @@ class MainWindow : public QMainWindow
         Ui::MainWindow * ui;
         QSharedPointer <networkServ> netServer;
         QThread * servThread = nullptr;
-        QVector<CmdParts> commandsToDo;
         QMap <QString, TestIV_ExecutorInterface *> executors;
 
         bool initServer(quint16 portN);
@@ -37,10 +36,11 @@ class MainWindow : public QMainWindow
         void finishThread();
 
         bool checkEquipmentState(CmdParts &cmdPart);
+        bool execCommand(/*const*/ CmdParts &cmdPart);
 
 private slots:
         void fixState(const QString & mes);
-        void parseNewCommands(QTcpSocket * sock, const QStringList & cmnds);
+        void parseNewCommands(QTcpSocket * sock, const QStringList &cmnds);
 
     signals:
         void answerCommands(const QVector<CmdParts> & cmnds);

@@ -5,6 +5,7 @@
 #include <QVariant>
 #include <QStringLiteral>
 
+
 class QTcpSocket;
 
 // it's possible to read all these constants from some configuration file - for protocol tuning...
@@ -16,6 +17,7 @@ const inline QString T_STATE     = QStringLiteral("state");
 const inline QString END_COMMAND = QStringLiteral("\n");
 
 const inline int CMD_PREFIX_LEN  = T_GET_LED_.length();
+
 /*
 // arguments
 enum CommandTypesEnum
@@ -30,27 +32,28 @@ const inline QStringList LED_STATES = {"on", "of"};
 // fregs -?
 
 // results
-const inline QString T_OK     =  QStringLiteral("OK");
-const inline QString T_FAILID =  QStringLiteral("FAILED");
-const inline QString T_BAD_CMD = QStringLiteral(" Bad command type");
+const inline QString T_OK     =  QStringLiteral("OK ");
+const inline QString T_FAILID =  QStringLiteral("FAILED. ");
+const inline QString T_BAD_CMD = QStringLiteral("Bad command type");
 
 
 struct CmdParts
 {
-    QTcpSocket * sock;
+    QTcpSocket * sock = nullptr;
     //CommandTypesEnum type
     QString name;
     bool isSetter;
     QVariant arg;    // is protocol allows "FAILED reason" answer ?!?
     QString  rezult;
+    CmdParts() = default;
     CmdParts(QTcpSocket * s)
     {
         sock = s;
     }
     QString getString()
     {
-        return QString("is setter:%1, name:%2, arg:%3").arg(isSetter).arg(name).arg(
-                   arg.toString());
+        return QString("is setter:%1, name:%2, arg:%3, result: %4").arg(isSetter).arg(name).arg(
+                   arg.toString()).arg(rezult);
     }
     bool parse(const QString cmd)
     {
@@ -67,7 +70,7 @@ struct CmdParts
             arg = cmd.section(' ', 1, 1).trimmed();
             if (arg.isNull())
             {
-                rezult = T_FAILID + " no argument";
+                rezult = T_FAILID + "no argument";
                 return false;
             }
             //else  - we not check arguments here - executers will do that

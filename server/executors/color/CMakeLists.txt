@@ -8,14 +8,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(QT_USE_QTPLUGIN TRUE)
-#set(TPLUGIN_LIBRARY ON)
-#set(COLOR_LIBRARY)
-
-#add_definitions(COLOR_LIBRARY)
 
 add_definitions(-DCOLOR_LIBRARY)
-#add_compile_definitions(COLOR_LIBRARY)
-#target_compile_definitions(COLOR_LIBRARY=1)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
