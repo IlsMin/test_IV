@@ -35,14 +35,14 @@ class MainWindow : public QMainWindow
         bool initExecutors();
         void finishThread();
 
-        bool checkEquipmentState(CmdParts &cmdPart);
-        bool execCommand(/*const*/ CmdParts &cmdPart);
+        bool checkEquipmentState(CmdParts & cmdPart);
+        bool execCommand(/*const*/ CmdParts & cmdPart);
+        void sayAboutBadCommands(const QVector<CmdParts> & cmnds);
 
-private slots:
+    private slots:
         void fixState(const QString & mes);
-        void parseNewCommands(QTcpSocket * sock, const QStringList &cmnds);
+        void parseNewCommands(QTcpSocket * sock, const QStringList & cmnds);
 
-    signals:
-        void answerCommands(const QVector<CmdParts> & cmnds);
+        //signals:
 };
 #endif // MAINWINDOW_H

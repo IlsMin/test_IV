@@ -9,7 +9,7 @@
 
 #include "networkserv.h"
 #include "mainwindow.h"
-#include "./executors/state/state.h"
+//#include "./executors/state/state.h"
 #include "executorInterface.h"
 #include "common_parts.h"
 #include "./ui_mainwindow.h"
@@ -28,6 +28,9 @@ MainWindow::MainWindow(quint16 portN, QWidget * parent)
     lbl_Port->setText(QString("Port: %1  ").arg(portN));
     ui->statusbar->addPermanentWidget(lbl_Port);
     //TODO QMainWindow::setWindowIcon(...)
+
+
+    qRegisterMetaType <QTcpSocket *> ("QTcpSocket*");       // need on MAC only
 
     qRegisterMetaType <CmdParts> ("CmdParts");
     qRegisterMetaType <QVector<CmdParts>> ("QVector<CmdParts>");
@@ -109,44 +112,57 @@ void MainWindow::parseNewCommands(QTcpSocket * sock, const QStringList & cmnds)
             badCommands.append(cmdPart);
             continue;
         }
-        if(!executors.contains(cmdPart.name))
+        if (!executors.contains(cmdPart.name))
         {
-            cmdPart.rezult += " No executor for command "+ cmdPart.name;
+            cmdPart.rezult += " No executor for command " + cmdPart.name;
             badCommands.append(cmdPart);
             continue;
         }
         commandsToDo.append(cmdPart);
     }
-    for(auto & cmdPart: commandsToDo)
-        if(execCommand(cmdPart))
-                emit answerCommands({cmdPart});
-        else badCommands << cmdPart;
-
+    for (auto & cmdPart : commandsToDo)
+    {
+        if (!execCommand(cmdPart))
+            badCommands << cmdPart;
+        // qDebug() << "write back:" << cmdPart.rezult;
+        fixState(cmdPart.rezult); //for fixing in app log
+        sock->write(cmdPart.rezult.toLocal8Bit() + "\n");
+    }
 
     if (!badCommands.isEmpty())
-        emit answerCommands(badCommands);
+        sayAboutBadCommands(badCommands);
+}
+//----------------------------------------------------------------------------------
+//
+void MainWindow::sayAboutBadCommands(const QVector<CmdParts> & responses)
+{
+    for (CmdParts const & answer : responses)
+    {
+        QTcpSocket * sock = answer.sock;
+        sock->write(answer.rezult.toLocal8Bit() + "\n");
+        fixState(answer.rezult);
+    }
 }
 
+//----------------------------------------------------------------------------------
+//
+bool MainWindow::checkEquipmentState(CmdParts & /*cmdPart*/)
+{
+    return true;   // state is always On!
 
- //----------------------------------------------------------------------------------
- //
- bool MainWindow::checkEquipmentState(CmdParts & /*cmdPart*/)
- {
-     return true;   // state is always On!
+    //if (State::getEquipmentState())
+    /*    qDebug() << State::equipmentState << & State::equipmentState;
+           if ( State::equipmentState )
+            return true;   // state is On
 
-     //if (State::getEquipmentState())
- /*    qDebug() << State::equipmentState << & State::equipmentState;
-        if ( State::equipmentState )
-         return true;   // state is On
+        //if (TestIV_ExecutorInterface::ifTurnOnCmd(cmdPart))   // trying to set state = On
+        if("state" == cmdPart.name)
+            return true;
 
-     //if (TestIV_ExecutorInterface::ifTurnOnCmd(cmdPart))   // trying to set state = On
-     if("state" == cmdPart.name)
-         return true;
-
-     cmdPart.rezult = T_FAILID + "equipment is switched off" ;
-     return false;
-     */
- }
+        cmdPart.rezult = T_FAILID + "equipment is switched off" ;
+        return false;
+        */
+}
 
 
 //----------------------------------------------------------------------------------
@@ -162,7 +178,7 @@ bool MainWindow::initAll()
     connect(servPtr, &networkServ::newCommandsArived, this, &MainWindow::parseNewCommands);
 
     // main -> network  thread signals
-    connect(this, &MainWindow::answerCommands, servPtr, &networkServ::onAnswerCommands);
+    connect(this, &MainWindow::sayAboutBadCommands, servPtr, &networkServ::onAnswerCommands);
     //connect(this, &MainWindow::sendCommand, servPtr,  &networkServ::onSendCommand);
 
     if (!initExecutors())
@@ -198,9 +214,21 @@ bool MainWindow::initExecutors()
         3. we check all 'executors' subdirs, so if some new/unregistred plugin will be found,
            it will be 'registred' in common map.
     */
-
-    QString pluginPath = QApplication::applicationDirPath() + QDir::separator()
+    QString appPath = QApplication::applicationDirPath();
+#if __APPLE__
+    int pos = appPath.indexOf(".app/Contents");
+    if (pos > 0)
+    {
+        if (pos > 3)
+            appPath.resize(pos);
+        pos = appPath.lastIndexOf('/'); // start od app name
+        if (pos > 0)
+            appPath.resize(pos);        // use 'phisical' dir path - not Contents
+    }
+#endif
+    QString pluginPath = appPath + QDir::separator()
                          + T_EXECUTORS + QDir::separator();
+
     QDir dir(pluginPath);
     if (!dir.exists())
         dir.mkpath(pluginPath); // or return error ?
@@ -209,19 +237,24 @@ bool MainWindow::initExecutors()
 #if _WIN64 || _WIN32
     plug_ext = ".dll";
 #else
-    plug_ext = ".so";  // don't forget to rename plugin if your OS/file have another extension ;)
     plug_pref = "lib";
+#if __APPLE__
+    plug_ext = ".dylib";
+#else
+    plug_ext = ".so";
+#endif
+    // don't forget to rename plugin if your OS/file have another extension ;)
 #endif
 
     QPluginLoader  loader(this);
     for (auto const & subdir : dir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot))
     {
-        QString fullName = pluginPath + subdir + QDir::separator() +plug_pref+ subdir + plug_ext;
+        QString fullName = pluginPath + subdir + QDir::separator() + plug_pref + subdir + plug_ext;
         if (QFile::exists(fullName))
         {
             loader.setFileName(fullName);
             if (!loader.load())
-                qWarning() << "unloaded plugin "<< fullName << loader.errorString();
+                qWarning() << "unloaded plugin " << fullName << loader.errorString();
             else
             {
                 TestIV_ExecutorInterface * interf = qobject_cast<TestIV_ExecutorInterface *>(loader.instance());
@@ -241,21 +274,21 @@ bool MainWindow::initExecutors()
 }
 //----------------------------------------------------------------------------------
 //
-bool MainWindow::execCommand(CmdParts &cmdPart)
+bool MainWindow::execCommand(CmdParts & cmdPart)
 {
     TestIV_ExecutorInterface * interf = nullptr;
-    if(executors.contains(cmdPart.name))   // must be already done in checkers
+    if (executors.contains(cmdPart.name))  // must be already done in checkers
         interf = executors[cmdPart.name];
-    if(nullptr == interf)
+    if (nullptr == interf)
     {
         cmdPart.rezult = T_FAILID + "No executer for command " + cmdPart.name;
         return false;
     }
-    if(!interf->checkCommandArgs(cmdPart))
+    if (!interf->checkCommandArgs(cmdPart))
         return false;
 
-    if(cmdPart.isSetter)
-         interf->doSetter(cmdPart);
+    if (cmdPart.isSetter)
+        interf->doSetter(cmdPart);
     else interf->doGetter(cmdPart);
 
     cmdPart.rezult = T_OK + cmdPart.arg.toString();

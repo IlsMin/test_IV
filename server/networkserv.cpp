@@ -84,7 +84,7 @@ void networkServ::onSocketReadyRead()
 {
 
     QTcpSocket * sock = qobject_cast<QTcpSocket *>(sender());
-  if (nullptr == sock)
+    if (nullptr == sock)
     {
         emit stateMessage("Unknown object sent signal about socket data");
         return;
@@ -100,11 +100,11 @@ void networkServ::onSocketReadyRead()
             data.append( QString::fromUtf8(buf, len));
             data.replace("\r\n", "\n");     // Telnet
         }
-            //else break;
+        //else break;
     }
     bool isFullCmd = data.endsWith(END_COMMAND);
     QStringList commands = data.split(END_COMMAND, Qt::SkipEmptyParts);
-    if(commands.isEmpty())
+    if (commands.isEmpty())
     {
         emit stateMessage("bad data in socket (can't parse command)");
         //TODO ? say about
@@ -118,11 +118,11 @@ void networkServ::onSocketReadyRead()
         socketData[sock] = lastCmd;
         commands.removeLast();     // not full command string
     }
-    if(!commands.isEmpty())
+    if (!commands.isEmpty())
     {
         emit newCommandsArived(sock, commands);
 
-      //echo  sock->write(lastCmd.toLocal8Bit()+"\n");
+        //echo  sock->write(lastCmd.toLocal8Bit()+"\n");
     }
 }
 //----------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ void networkServ::onAnswerCommands(const QVector<CmdParts> & responses)
         QTcpSocket * sock = answer.sock;
         //socketData.at(0).
         qDebug() << "write back:" << answer.rezult;
-        sock->write(answer.rezult.toLocal8Bit()+"\n");
+        sock->write(answer.rezult.toLocal8Bit() + "\n");
         //TODO: send responces to set_/OK commands to ALL connected clients ?
         // (all clients need to know current/changed state)
     }
