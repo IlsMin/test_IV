@@ -28,12 +28,14 @@ const inline QStringList CMD_TYPES  = {"state", "color", "rate"};
 */
 
 const inline QStringList LED_COLORS = {"red", "green", "blue"};
-const inline QStringList LED_STATES = {"on", "of"};
+const inline QStringList LED_STATES = {"on", "off"};
 // fregs -?
 
+const inline QString T_rate    =  QStringLiteral("rate");
+
 // results
-const inline QString T_OK     =  QStringLiteral("OK ");
-const inline QString T_FAILID =  QStringLiteral("FAILED. ");
+const inline QString T_OK      =  QStringLiteral("OK ");
+const inline QString T_FAILID  =  QStringLiteral("FAILED. ");
 const inline QString T_BAD_CMD = QStringLiteral("Bad command type");
 
 
@@ -74,27 +76,16 @@ struct CmdParts
                 return false;
             }
             //else  - we not check arguments here - executers will do that
-
         }
+
         int len = cmd.length();
         int pos = cmd.indexOf(' ');
         if (pos == -1)
             pos = len;
 
-
         // !!! here is some limitation - length of command prefix !!!
         // - in common case we need to use some Regular expression
         name = cmd.mid(CMD_PREFIX_LEN, pos - CMD_PREFIX_LEN).trimmed();
-        /*QString strType = cmd.mid(CMD_PREFIX_LEN, pos - CMD_PREFIX_LEN);
-         pos = CMD_TYPES.indexOf(strType);
-         if (pos  < 0)
-         {
-             rezult = T_FAILID;
-             arg = T_BAD_CMD;
-             return false;
-         }
-         else type = CommandTypesEnum(pos);
-         */
         qDebug() << cmd << ",  parsed to: " << getString();
         return true;
     }

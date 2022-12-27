@@ -9,7 +9,6 @@
 
 #include "networkserv.h"
 #include "mainwindow.h"
-//#include "./executors/state/state.h"
 #include "executorInterface.h"
 #include "common_parts.h"
 #include "./ui_mainwindow.h"
@@ -31,7 +30,6 @@ MainWindow::MainWindow(quint16 portN, QWidget * parent)
 
 
     qRegisterMetaType <QTcpSocket *> ("QTcpSocket*");       // need on MAC only
-
     qRegisterMetaType <CmdParts> ("CmdParts");
     qRegisterMetaType <QVector<CmdParts>> ("QVector<CmdParts>");
 
@@ -65,8 +63,8 @@ bool MainWindow::initServer(quint16 portN)
         // servThread start/finish
         QAtomicInt serverStarted;
         // *INDENT-OFF*
-        if (!(  connect(servThread, &QThread::started,  [&]() { serverStarted = +1;}) &&
-              connect(servThread, &QThread::finished, [&]() { serverStarted = -1; /*netServer->finishAll();*/})
+        if (!(   connect(servThread, &QThread::started,  [&]() { serverStarted = +1;}) &&
+                 connect(servThread, &QThread::finished, [&]() { serverStarted = -1; /*netServer->finishAll();*/})
             ))  return false;
         // *INDENT-ON*
 
@@ -120,13 +118,14 @@ void MainWindow::parseNewCommands(QTcpSocket * sock, const QStringList & cmnds)
         }
         commandsToDo.append(cmdPart);
     }
+
     for (auto & cmdPart : commandsToDo)
     {
         if (!execCommand(cmdPart))
             badCommands << cmdPart;
-        // qDebug() << "write back:" << cmdPart.rezult;
+        else
+            sock->write(cmdPart.rezult.toLocal8Bit() + "\n");
         fixState(cmdPart.rezult); //for fixing in app log
-        sock->write(cmdPart.rezult.toLocal8Bit() + "\n");
     }
 
     if (!badCommands.isEmpty())
@@ -178,8 +177,7 @@ bool MainWindow::initAll()
     connect(servPtr, &networkServ::newCommandsArived, this, &MainWindow::parseNewCommands);
 
     // main -> network  thread signals
-    connect(this, &MainWindow::sayAboutBadCommands, servPtr, &networkServ::onAnswerCommands);
-    //connect(this, &MainWindow::sendCommand, servPtr,  &networkServ::onSendCommand);
+    //connect(this, &MainWindow::sayAboutBadCommands, servPtr, &networkServ::onAnswerCommands);
 
     if (!initExecutors())
         return false;
@@ -284,13 +282,25 @@ bool MainWindow::execCommand(CmdParts & cmdPart)
         cmdPart.rezult = T_FAILID + "No executer for command " + cmdPart.name;
         return false;
     }
-    if (!interf->checkCommandArgs(cmdPart))
+    if (cmdPart.isSetter &&
+        !interf->checkCommandArgs(cmdPart))
         return false;
 
     if (cmdPart.isSetter)
-        interf->doSetter(cmdPart);
+        interf ->doSetter(cmdPart);
     else interf->doGetter(cmdPart);
 
     cmdPart.rezult = T_OK + cmdPart.arg.toString();
+
+    if (T_OK + "off" == cmdPart.rezult) // for state cmd only!
+    {
+        //turn off rate too
+        interf = executors[T_rate];
+        if (nullptr != interf)
+        {
+            cmdPart.arg = 0;
+            interf->doSetter(cmdPart);
+        }
+    }
     return true;
 }

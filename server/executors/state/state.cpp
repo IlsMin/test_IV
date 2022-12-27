@@ -2,15 +2,18 @@
 #include "state.h"
 #include "common_parts.h"
 
-//bool State::equipmentState ( false);
+
 bool State::checkCommandArgs(CmdParts & cmnd)
 {
     bool rez = TestIV_ExecutorInterface::checkCommandArgs(cmnd);
     if (rez)
     {
-        rez = LED_STATES.contains(cmnd.arg.toString(), Qt::CaseInsensitive);
-        if (!rez)
-            cmnd.rezult = T_FAILID + "wrong state";
+        if (cmnd.isSetter)
+        {
+            rez = LED_STATES.contains(cmnd.arg.toString(), Qt::CaseInsensitive);
+            if (!rez)
+                cmnd.rezult = T_FAILID + "wrong state";
+        }
     }
     return rez;
 }
@@ -28,12 +31,6 @@ void State::doSetter(const CmdParts & cmnd)
 
 void State::doGetter(CmdParts & cmnd)
 {
-    cmnd.rezult = equipmentState ? "on" : "off";
+    cmnd.arg = equipmentState ? "on" : "off";
 }
 
-bool State::getEquipmentState()
-{
-    qDebug() << "get_equipmentState" << &State::equipmentState ;
-    return  State::equipmentState;
-
-}

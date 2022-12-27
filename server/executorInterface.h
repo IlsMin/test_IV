@@ -16,19 +16,43 @@ class TestIV_ExecutorInterface : public QObject
     protected:
 
         QWidget * pluginWidget  = nullptr;
+        inline static bool equipmentState = false;
 
 
         virtual ~TestIV_ExecutorInterface() {}
+        bool isStateOn(const CmdParts & cmdPart)
+        {
+            return isStateOn(cmdPart.arg.toString());
+        }
+        bool isStateOn(const QString & cmdArg)
+        {
+            return cmdArg.length() == 2 && cmdArg.at(1) == 'n';   // on : off
+        }
+
 
     public:
         virtual bool checkCommandArgs( CmdParts & cmnd)
         {
             bool rez = pluginWidget != nullptr;
-            if(!rez)
+            if (!rez)
                 cmnd.rezult = T_FAILID + "The equipment is not initialized";
+            else
+            {
+                if (!equipmentState)    // need to turn on before!
+                {
+                    qDebug() << "state" << equipmentState << &equipmentState;
+
+                    if ( cmnd.name != T_STATE &&
+                         !isStateOn(cmnd)
+                       )
+                    {
+                        cmnd.rezult = T_FAILID + "equipment state is turned off";
+                        rez = false;
+                    }
+                }
+            }
             return rez;
         }
-
         virtual void init() /*{}*/   = 0; // for executer needs
         virtual void doSetter(const CmdParts & cmnd) = 0;
         virtual void doGetter(CmdParts & cmnd) = 0;
