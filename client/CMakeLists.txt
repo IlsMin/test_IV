@@ -1,44 +1,38 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 
-project(client LANGUAGES CXX)
+project(client_IV VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-
-set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# QtCreator supports the following variables for Android, which are identical to qmake Android variables.
-# Check http://doc.qt.io/qt-5/deployment-android.html for more information.
-# They need to be set before the find_package(Qt5 ...) call.
+find_package(Qt6 REQUIRED COMPONENTS Quick) 
+#find_package(Qt6 COMPONENTS Quick REQUIRED)
+find_package(Qt6 COMPONENTS QuickControls2 REQUIRED)
 
-#if(ANDROID)
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-#    if (ANDROID_ABI STREQUAL "armeabi-v7a")
-#        set(ANDROID_EXTRA_LIBS
-#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libcrypto.so
-#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libssl.so)
-#    endif()
-#endif()
+qt_add_executable(appclient_IV
+    main.cpp
+)
 
-find_package(Qt5 COMPONENTS Core Quick REQUIRED)
+qt_add_qml_module(appclient_IV
+    URI client_IV
+    VERSION 1.0
+    QML_FILES main.qml 
+    VP_Button.qml
+    VP_TextEdit.qml
+)
 
-if(ANDROID)
-    add_library(client SHARED
-      main.cpp
-      qml.qrc
-    )
-else()
-    add_executable(client
-      main.cpp
-      qml.qrc
-    )
-endif()
+set_target_properties(appclient_IV PROPERTIES
+    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    MACOSX_BUNDLE TRUE
+    WIN32_EXECUTABLE TRUE
+)
 
-target_compile_definitions(client
-  PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
-target_link_libraries(client
-  PRIVATE Qt5::Core Qt5::Quick)
+target_link_libraries(appclient_IV
+    PRIVATE Qt6::Quick)
+
+install(TARGETS appclient_IV
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+find_package(Qt6 COMPONENTS QuickControls2 REQUIRED)

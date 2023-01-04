@@ -1,114 +1,218 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Window 2.12
-//import WebSockets
+import QtQuick //2.15
+//import QtQuick.Controls 1.0
+//import QtQuick.Controls// 2.15
+import QtQuick.Controls // 2.15
+import QtQuick.Controls.Universal
+//import QtQuick.Controls.Styles 1.0
+//import QtQuick.Controls.macOS 6.0
 
-Window
-{
+
+Window {
     id: window
-    width: 400
-    height: 600
+    width: 420
+    height: 460
     visible: true
-    title: qsTr("IVideon test client");
-    minimumWidth: 400
-    minimumHeight: 250
-    //property int radius: 4
-    property int fnt_size: 14
-    property int txt_width: 100
+    //  Material.accent: Material.BlueGrey
 
+    property int fnt_size :14
+    property var mdl_color: ["red","green","blue"]
+    property var mdl_state: ["on","off"]
 
-    GroupBox {
-        id: groupBox1
-        x: 35
-        y: 160
-        width: 260
-        height: 122
-        title: qsTr("Command  parameters")
-
-        TextEdit {
-            id: e_cmnd
-            x: -6
-            y: 10
-            width: 247
-            height: 100
-            text: qsTr("type test
-command here")
-            wrapMode: Text.WordWrap
-            horizontalAlignment: Text.AlignLeft
-            font.pixelSize: 12
-        }
-    }
-
+    title: qsTr("test_IV  client")
     GroupBox {
         id: groupBox
-        x: 31
-        y: 27
-        width: 268
-        height: 104
-        title: qsTr("Partner  socket  info")
+        x: 25
+        width: 273
+        height: 90
+        anchors.top: parent.top
+        anchors.topMargin: 24
+        title: qsTr("Server  socket  info")
 
         Grid {
             id: grid2
-            anchors.rightMargin: 0
-            anchors.bottomMargin: 0
-            anchors.leftMargin: 0
-            anchors.topMargin: 8
-            spacing: 8
-            anchors.fill: parent
+             anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.bottomMargin: 12
+            anchors.rightMargin: 5
+            flow: Grid.LeftToRight
+            spacing: 12
             rows: 2
             columns: 2
 
 
-
-
-
-
-
-
-
-
-
-
-
-
             Text {
-                id: element2
+                id: t_ip
                 text: qsTr("   IP:")
-                horizontalAlignment: Text.AlignHCenter
-                width: txt_width
+
             }
 
             VP_TextEdit {
                 id: e_ip
-                width: 80
-                height: 20
-                text: "192.168.1.2"
-                //text: qsTr("100.64.0.1")
-                //                text: qsTr("127.0.0.1")
+
+                // text: "192.168.1.2"
+                text: ("127.0.0.1")
             }
 
+
             Text {
-                width: txt_width
+                id: t_port
                 text: qsTr("Port:")
-                horizontalAlignment: Text.AlignHCenter
-                font.pixelSize: fnt_size
+                // font.pixelSize: fnt_size
             }
-            TextEdit {
+
+
+            VP_TextEdit {
                 id: e_port
-                width: 80
-                height: 20
+
                 text: qsTr("12345")
-                font.pixelSize: fnt_size
-                font.bold: cursorVisible
+                // font.pixelSize: fnt_size
                 //onTextChanged: listenPort();
             }
+        }
+
+
+    }
+
+    GroupBox {
+        id: groupBox1
+        x: 25
+        y: 135
+        width: 273
+        height: 191
+        title: qsTr("command parameters")
+
+        Grid {
+            id: grid1
+            anchors.fill: parent
+            horizontalItemAlignment: Grid.AlignHCenter
+            verticalItemAlignment: Grid.AlignVCenter
+            flow: Grid.LeftToRight
+          //  rightPadding: 8
+            //   anchors.rightMargin:  7
+            rows: 0
+            spacing: 2
+            columns: 2
+            //1 -st row
+            Text {
+                id: t_type
+
+                text: qsTr("type :")
+
+           }
+
+            Row {
+                id: row
+                //width: 200
+               // height: 40
+
+                RadioButton {
+                    id: r_setter
+                    text:"setter"
+                    checkable: true
+                    checked:  true
+
+                }
+
+                RadioButton {
+                    id: r_getter
+                    //   width: cb_cmnds.width
+                    text:"getter"
+                    //    anchors.right: parent.right
+                    //  anchors.rightMargin: 6
+                    onCheckedChanged: //StateChanged:
+                    {
+                        var enabl =  !checked
+                        cb_val.enabled    = enabl;
+                        e_val.enabled     = enabl;
+                        r_freeVal.enabled = enabl;
+                        r_hardVal.enabled = enabl;
+                        if(enabl)
+                        { // call  r_freeVal.onCheckedChanged ?
+                            cb_val.enabled = !r_freeVal.checked;
+                            e_val. enabled =  r_freeVal.checked;
+                            e_val.readOnly = !e_val.enabled;
+
+                        }
+
+                    }
+                }
+            }
+            //2-nd row
+            Text {
+                         id: t_cmd
+
+                         text: qsTr("command :")
+                        // anchors.verticalCenter: cb_cmnds.verticalCenter
+                         //anchors.verticalCenter: parent.verticalCenter
+                         //   font.pixelSize: fnt_size
+                     }
+
+
+            ComboBox {
+                id: cb_cmnds
+                currentIndex: -1
+                model: ["state","rate","color"]
+                //  model: ["red","green","blue"]
+                Component.onCompleted: currentIndex =  0;
+                onCurrentIndexChanged:
+                {
+                    switch(currentIndex)
+                     { case 0:  cb_val.model = mdl_state; break;
+                       case 1:  cb_val.model = 6;         break;
+                       case 2:  cb_val.model = mdl_color; break;
+                     }
+                }
+            }
+
+            //3 row
+            Text {text: " value ";  font.underline: true}
+            Text {text: "             "}
+            RadioButton {
+                       id: r_hardVal
+
+                         text: qsTr("predefined:")
+                         checked:  true
+
+                  }
+
+            ComboBox {
+                id: cb_val
+                //  width: 99
+                // contentItem: {"red","green","blue"}
+
+               // model: md_color
+                //model: ["red","green","blue"]   model: ["red","green","blue"]
+
+
+            }
+            //3 row
+            RadioButton {
+                          id: r_freeVal
+
+                         text: qsTr("free/edited:")
+                         onCheckedChanged: //StateChanged:
+                         {
+                             cb_val.enabled = !checked;
+                             e_val. enabled =  checked;
+                             e_val.readOnly = !e_val.enabled;
+                           }
+                    }
+
+            TextEdit {
+                id: e_val
+                text: qsTr("some_value")
+                readOnly: true
+                // font.pixelSize: fnt_size
+                font.bold: cursorVisible
+            }
+
         }
     }
 
     VP_Button {
         id: btn_send
-        x: 305
-        y: 252
+        x: 312
+        y: 296
         width: 80
         text: qsTr("Send")
         onClicked:
@@ -124,178 +228,85 @@ command here")
 
     }
 
-    GroupBox {
-        id: groupBox2
-        x: 35
-        y: 316
-        width: 260
-        height: 122
-
-        TextArea {
-            id: t_response
-            x: 3
-            y: 19
-            width: 233
-            height: 91
-            placeholderText: qsTr("Text Area")
-        }
-        title: qsTr("Server responses")
+    VP_Button {
+        id: vP_Button
+        x: 312
+        y: 84
+        width: 80
+        text: "Connect"
+        enabled:  true;
+        // onClicked: Vibrator.test()
     }
 
     VP_Button {
         id: btn_send1
-        x: 305
-        y: 408
+        x: 312
+        y: 412
         width: 80
         text: qsTr("Clear")
     }
-
-    VP_Button {
-        id: btn_send2
-        x: 305
-        y: 101
-        width: 80
-        text: qsTr("Connect")
-    }
-
     CheckBox {
-        id: checkBox
-        x: 238
-        y: 288
-        width: 147
-        height: 40
-        text: qsTr("Clear on send")
-        anchors.right: parent.right
-        anchors.rightMargin: 15
-        transformOrigin: Item.Right
-        layer.textureMirroring: ShaderEffectSource.NoMirroring
+        id: autoClear
+        x: 311
+        y: 366
+        width: 95
+        height: 28
+        text: "auto-clear"
+        HoverHandler {
+                  id: hoverHandler
+                }
+        ToolTip  {
+            id: toolTip
+            visible: autoClear.hovered
+            timeout: 1800
+            text: "clear server answer on sending new command"
+          //  x:  autoClear.left// hoverHandler.point.position.x// -height
+            y: hoverHandler.point.position.y - autoClear.height
+         }
+        checked: true
+
+        //     indicator.width: 28
+        //   indicator.height: 28
+        anchors.left: groupBox2.right
+        clip: false
+        anchors.leftMargin: 14
+        hoverEnabled: false
+        padding: 0
+        bottomPadding: 0
+        topPadding: 0
+        checkState: Qt.Checked
+        tristate: false
+        checkable: true
+        enabled: true
     }
-    /** /
-    WebSocket
-    {
-        id: socket
-        //active: true
+    GroupBox {
+        id: groupBox2
+        title: qsTr("server answer")
+        x: 25
+        y: 344
+        width: 273
+        height: 98
+        anchors.leftMargin: 24
+        Grid {
+            id: grid3
+            anchors.fill: parent
+            anchors.bottomMargin: 0
+            anchors.leftMargin: 24
+            anchors.topMargin: 24
+            // anchors.bottomMargin: 87
+            spacing: 8
+            columns: 2
 
-        onTextMessageReceived:
-        {
-            t_state.text ="Server message: " + message
-
+            Text {
+                id: t_state
+                width: 273
+                height: 30
+                text: qsTr("")
+                // anchors.bottom: parent.bottom
+                font.pixelSize: 12
+                anchors.bottomMargin: 44
+            }
         }
-        onStatusChanged:
-        {
-            if (socket.status === WebSocket.Error)
-                 t_state.text = "Error: " + socket.errorString
-              else
-             if (socket.status === WebSocket.Open)
-             {
-                 var mes = "{\"len\":%1, \"freq\":%2}"
-                 t_state.text = "Sending to "+socket.url
-                 mes = mes.arg(e_time.text.trim());
-                 mes = mes.arg(e_freq.text.trim());
-                 socket.sendTextMessage(mes)
-             } else
-             if (socket.status === WebSocket.Closed)
-
-                 t_state.text = "Socket closed"
-              else
-             if (socket.status === WebSocket.Connecting)
-                 t_state.text = "Connecting..."
-
-
-        console.log(t_state.text)
-        }
     }
-    /** /
-    WebSocketServer
-    {
-              id: server
-              //port: e_port.text.trim()
-              //listen: false
-              //accept: true
-              onClientConnected:
-              {
-                  t_state.text ="onClientConnect"
-                  webSocket.onTextMessageReceived.connect(function(message)
-                  {
-                      t_state.text ="Client message: " + message
-                      var jsonObj= JSON.parse(message);
-                      var len  = jsonObj.len;
-                      var freq = jsonObj.freq;
-                      if (freq >0 && freq <256 && len >0 && len <=10000)
-                           Vibrator.vibrate(len, freq);
-                  });
-              }
-              onErrorStringChanged:
-              {
-                  t_state.text = "Error: " + socket.errorString
-              }
-               Component.onCompleted:
-                  listenPort();
-     }
-/**/
-// https://codeblog.vurdalakov.net/2009/11/solution-qsslsocket-cannot-call.html
-// https://forum.qt.io/topic/91777/qsslsocket-cannot-call-unresolved-function-sslv23_client_method/2
-// https://bintray.com/vszakats/generic/openssl
-    function listenPort()
-    {
-        //console.log(socket.errorString)
-        server.port = e_port.text.trim()
-        server.listen = true
-        server.accept = true
-        //console.log(socket.errorString)
-        if (server.listen === true)
-            t_state.text = server.url  + " port listening..."
-        else
-            t_state.text = "server not started"
-
-    }
-//    WebSocketServer{
-
-//            property var listSockets: []
-
-//            id: idWebSocketServer
-//            accept: true
-//            listen: true
-//            host: "127.0.0.1"
-//            port: 12345
-
-//            onClientConnected: {
-
-//                var _socketName = webSocket.toString()
-
-//                if(!listSockets[_socketName]){
-
-//                    listSockets[_socketName] = webSocket
-//                    listClientURL.push(url)
-//                }
-
-//                var _socket = webSocket.onTextMessageReceived.connect(function(message) {
-
-//                    for (var i in listSockets){
-
-//                        if(listSockets[i].status == WebSocket.Open){
-
-//                            listSockets[i].sendTextMessage(message)
-//                        }
-//                    }
-//              });
-//            }
-
-//            onErrorStringChanged: {
-
-//               t_state.text = errorString
-//                console.log("Ошибка: " + errorString)
-//            }
-//            Component.onCompleted: {
-    //                t_state.text = url+ "_" + name
-////                        wsRoot.appendMessage("Server URL: " + url);
-//                        // activate the client connection
-//                        //clientSocket.url = url;
-//                    }
-//        }
-    Component.onCompleted:
-    {
-        //listenPort();
-    }
+    
 }
-
