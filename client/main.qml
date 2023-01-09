@@ -1,7 +1,5 @@
 import QtQuick //2.15
-//import QtQuick.Controls 1.0
-//import QtQuick.Controls// 2.15
-import QtQuick.Controls // 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Controls.Universal
 //import QtQuick.Controls.Styles 1.0
 //import QtQuick.Controls.macOS 6.0
@@ -17,6 +15,17 @@ Window {
     property int fnt_size :14
     property var mdl_color: ["red","green","blue"]
     property var mdl_state: ["on","off"]
+
+    function onSocketError(msg : string)
+    {
+        t_state.text = msg;
+        //TODO some error indicator
+    }
+    function onSocketState(msg : string, state: int)
+    {
+       onSocketError(msg);
+        btn_send.enabled = state === 3;//QAbstractSocket::ConnectedState
+    }
 
     title: qsTr("test_IV  client")
     GroupBox {
@@ -177,12 +186,6 @@ Window {
 
             ComboBox {
                 id: cb_val
-                //  width: 99
-                // contentItem: {"red","green","blue"}
-
-               // model: md_color
-                //model: ["red","green","blue"]   model: ["red","green","blue"]
-
 
             }
             //3 row
@@ -217,12 +220,10 @@ Window {
         text: qsTr("Send")
         onClicked:
         {
-            //if(socket.active) wait it
-            socket.active = false
-            socket.url =  "ws://" + e_ip.text.trim();// + ":"+e_port.text.trim()
-            //socket.url = "ws://echo.websocket.org"
-            console.log(socket.url)
-            socket.active = true
+           //clientSocket.
+            if(autoClear.checked)
+                t_state.text = "";
+
         }
 
 
@@ -235,7 +236,7 @@ Window {
         width: 80
         text: "Connect"
         enabled:  true;
-        // onClicked: Vibrator.test()
+        onClicked: clientSocket.init(e_ip.text.trim(), parseInt(e_port.text))
     }
 
     VP_Button {
@@ -244,6 +245,8 @@ Window {
         y: 412
         width: 80
         text: qsTr("Clear")
+        enabled: true
+        onClicked: t_state.text = "";
     }
     CheckBox {
         id: autoClear

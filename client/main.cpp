@@ -1,21 +1,33 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlComponent>
+#include <QQmlContext>
 
+
+#include "clientsocket.h"
 
 int main(int argc, char * argv[])
 {
     QGuiApplication app(argc, argv);
 
-    QQmlApplicationEngine engine;
+    //  QQmlApplicationEngine engine;
+    QQmlEngine engine;
+    clientSocket socket;
 
-    const QUrl url("qrc:/client_IV/main.qml");
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject * obj, const QUrl & objUrl)
+    QQmlContext * context = new QQmlContext(engine.rootContext());
+    context->setContextProperty("clientSocket", &socket);
+    //  qDebug() << context->contextProperty("clientSocket");
+
+    QQmlComponent component(&engine);
+    // QQuickWindow::setDefaultAlphaBuffer(true);
+    component.loadUrl(QUrl("qrc:/client_IV/main.qml"));
+    if ( component.isReady() )
     {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
-    engine.load(url);
+        QObject * obj = component.create(context);
+        socket.setQmlObject(obj);
+    }
+    else
+        qWarning() << component.errorString();
 
     return app.exec();
 }
