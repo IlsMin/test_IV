@@ -1,10 +1,12 @@
 #include "clientsocket.h"
+#include <QStandardPaths>
 
 clientSocket::clientSocket(QObject * parent)
     : QObject{parent}
 {
     tcpSocket.reset(new QTcpSocket(this));
     initSignals();
+    qDebug() << QStandardPaths::CacheLocation;
 }
 //
 //----------------------------------------------------------------------------------------------------------
@@ -14,6 +16,12 @@ void clientSocket::init(const QString & ip, quint16 port)
     ptr->abort();
     ptr->connectToHost(ip, port) ;
     qDebug() << ip << port << ptr->isOpen();
+}
+
+void clientSocket::sendToServer(const QString & data)
+{
+    if (!sendCmd(data))
+        onErrorOccurred();
 }
 //----------------------------------------------------------------------------------------------------------
 void clientSocket::initSignals()

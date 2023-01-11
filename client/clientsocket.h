@@ -30,7 +30,7 @@ class clientSocket : public QObject
     public slots:
 
         void init(const QString & ip, quint16 port);
-        //  bool sendToServer(const QString & data);
+        void sendToServer(const QString & data);
 
     signals:
         void dataFromServer(const QString & data);

@@ -8,10 +8,11 @@
 
 int main(int argc, char * argv[])
 {
+    // qputenv("QML_DISABLE_DISK_CACHE", "1");
     QGuiApplication app(argc, argv);
 
-    //  QQmlApplicationEngine engine;
-    QQmlEngine engine;
+    QQmlApplicationEngine engine;
+    // QQmlEngine engine;
     clientSocket socket;
 
     QQmlContext * context = new QQmlContext(engine.rootContext());
