@@ -111,6 +111,8 @@ void networkServ::onSocketReadyRead()
         return;
     }
     const auto lastCmd = commands.last();
+    qDebug() << "lastCmd" << lastCmd;
+
     if (isFullCmd) // full command
         socketData[sock] = QString();
     else
@@ -120,6 +122,7 @@ void networkServ::onSocketReadyRead()
     }
     if (!commands.isEmpty())
     {
+        qDebug() << "cmnds" << commands;
         emit newCommandsArived(sock, commands);
 
         //echo  sock->write(lastCmd.toLocal8Bit()+"\n");

@@ -285,7 +285,7 @@ bool MainWindow::execCommand(CmdParts & cmdPart)
     if (cmdPart.isSetter &&
         !interf->checkCommandArgs(cmdPart))
         return false;
-
+    qDebug() << cmdPart.getString();
     if (cmdPart.isSetter)
         interf ->doSetter(cmdPart);
     else interf->doGetter(cmdPart);
